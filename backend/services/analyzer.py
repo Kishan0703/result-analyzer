@@ -161,9 +161,8 @@ def compute_backlog(df: pd.DataFrame) -> dict:
     non_backlog_grades = {"NP", "PP", "P"}
     credit_df = credit_df[~credit_df["_grade"].isin(non_backlog_grades)]
 
-    credit_df["is_backlog"] = (
-        pd.to_numeric(credit_df["credits_earned"], errors="coerce").fillna(0) == 0
-    )
+    backlog_grades = {"F", "AB"}
+    credit_df["is_backlog"] = credit_df["_grade"].isin(backlog_grades)
 
     per_student = credit_df.groupby("usn").agg(
         backlog_count=("is_backlog", "sum"),
@@ -177,7 +176,7 @@ def compute_backlog(df: pd.DataFrame) -> dict:
     student_details = []
     for _, row in per_student[per_student["backlog_count"] > 0].iterrows():
         count = int(row["backlog_count"])
-        bucket = str(count) if count <= 6 else "6+"
+        bucket = str(count) if count < 6 else "6+"
         distribution[bucket] = distribution.get(bucket, 0) + 1
 
         backlog_subjects = credit_df[
